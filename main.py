@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 
 from keras.utils import to_categorical
 from keras.preprocessing.image import load_img, img_to_array
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Conv2D, MaxPool2D, GlobalAveragePooling2D
 
@@ -27,7 +27,7 @@ LABELS = ['20 km/h', '30 km/h', '50 km/h', '60 km/h', '70 km/h', '80 km/h', '80 
           'Only straight and left', 'Take right', 'Take left', 'Circle crossroad', 'End of overtaking limit', 'End of overtaking limit for track']
 
 
-NUM_LABELS = 42
+NUM_LABELS = 43
 
 IMG_HEIGHT = 30
 IMG_WIDTH = 30
@@ -99,7 +99,7 @@ def target_class_visualization(meta_info, save_path='./draft/target_class_visual
     plt.savefig(save_path)
 
 
-def load_data(data_dir):
+def load_data_train(data_dir):
 
     images = []
     labels = []
@@ -118,12 +118,34 @@ def load_data(data_dir):
     return images, labels
 
 
-def training():
+def load_data_test():
+
+    test_info_path = os.path.join(DATASET_PATH, 'Test.csv')
+    test_info = pd.read_csv(test_info_path)
+
+    images = []
+    labels = []
+
+    for index, row in test_info.iterrows():
+
+        img = load_img(os.path.join(DATASET_PATH, row['Path']), target_size=(30, 30))
+
+        image = img_to_array(img)
+            
+        images.append(image)
+        labels.append(row['ClassId'])
+
+    return images, labels
+
+
+def training(save_path='./model/cnn'):
 
     print('Loading data...')
-    images_train, labels_train = load_data(os.path.join(DATASET_PATH, 'Train'))
+    images_train, labels_train = load_data_train(os.path.join(DATASET_PATH, 'Train'))
 
     labels_train = to_categorical(labels_train)
+    print(labels_train)
+    # return 0
 
     X_train, X_val, y_train, y_val = train_test_split(np.array(images_train), labels_train, test_size=0.2, random_state=42)
 
@@ -162,7 +184,7 @@ def training():
     stop = time.time()
     print(f'Training time: {stop - start}s')
 
-    model.save('./model/cnn')
+    model.save(save_path)
 
     plt.figure(figsize = (12, 4))
     plt.subplot(1, 2, (1))
@@ -180,6 +202,18 @@ def training():
     plt.xlabel('epoch')
     plt.legend(['train', 'valid'], loc = 'upper right')
     plt.savefig('./draft/history.png')
+
+
+def testing(model_path='./model/cnn'):
+    images_test, labels_test = load_data_test()
+    
+    X_test = np.array(images_test)
+    y_test = to_categorical(labels_test)
+
+    model = load_model(model_path)
+
+    score = model.evaluate(X_test, y_test, verbose=0)
+    print("Test Accuracy: ", score[1])
 
 
 if __name__ == "__main__":
@@ -203,5 +237,6 @@ if __name__ == "__main__":
     # target_class_visualization(meta_info)
 
     training()
+    testing()
 
     pass
