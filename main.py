@@ -216,6 +216,20 @@ def testing(model_path='./model/cnn'):
     print("Test Accuracy: ", score[1])
 
 
+def testing_example(path_image='./GTSRB/Test/00005.png', model_path='./model/cnn'):
+    image_test = load_img(path_image, target_size=(30, 30))
+
+    image = img_to_array(image_test)
+
+    images = []
+    images.append(image)
+    X = np.array(images)
+    model = load_model(model_path)
+    y = model.predict_classes(X)
+    for i in y:
+        print(LABELS[i])
+
+
 if __name__ == "__main__":
     # meta_info_path = os.path.join(DATASET_PATH, 'Meta.csv')
     # meta_info = pd.read_csv(meta_info_path)
@@ -238,5 +252,6 @@ if __name__ == "__main__":
 
     training()
     testing()
+    testing_example()
 
     pass
